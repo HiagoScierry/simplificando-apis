@@ -52,7 +52,7 @@ todo_example = Todo(
 
 todos_db: List[Todo] = [
 ]
-next_id = 2
+next_id = 1
 
 # Rotas da API
 @app.get("/")
