@@ -41,11 +41,26 @@ class Todo(BaseModel):
     updated_at: datetime
 
 # Armazenamento em memória
-todos_db: List[Todo] = []
-next_id = 1
+todo_example = Todo(
+    id=1,
+    title="Exemplo de Tarefa",
+    description="Esta é uma tarefa de exemplo.",
+    completed=False,
+    created_at=datetime.now(),
+    updated_at=datetime.now()
+)
+
+todos_db: List[Todo] = [
+]
+next_id = 2
 
 # Rotas da API
 @app.get("/")
 async def root():
     """Endpoint raiz da API"""
     return {"message": "Todo API está funcionando!"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
