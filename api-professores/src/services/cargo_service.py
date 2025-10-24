@@ -12,14 +12,12 @@ class CargoService:
         self.cargo_repository = cargo_repository
     
     def listar_todos_cargos(self) -> List[Cargo]:
-        """Lista todos os cargos disponíveis"""
         try:
             return self.cargo_repository.list_cargos()
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro interno do servidor: {str(e)}")
     
     def obter_cargo_por_id(self, cargo_id: int) -> Cargo:
-        """Obtém um cargo específico pelo ID"""
         if cargo_id <= 0:
             raise HTTPException(status_code=400, detail="ID do cargo deve ser um número positivo")
         
@@ -30,7 +28,6 @@ class CargoService:
         return cargo
     
     def criar_novo_cargo(self, cargo_data: CargoCreate) -> Cargo:
-        """Cria um novo cargo"""
         if not cargo_data.nome or cargo_data.nome.strip() == "":
             raise HTTPException(status_code=400, detail="Nome do cargo é obrigatório")
         
@@ -45,7 +42,6 @@ class CargoService:
             raise HTTPException(status_code=500, detail=f"Erro ao criar cargo: {str(e)}")
     
     def atualizar_cargo(self, cargo_id: int, cargo_data: CargoCreate) -> Cargo:
-        """Atualiza um cargo existente"""
         if cargo_id <= 0:
             raise HTTPException(status_code=400, detail="ID do cargo deve ser um número positivo")
         
@@ -72,7 +68,6 @@ class CargoService:
             raise HTTPException(status_code=500, detail=f"Erro ao atualizar cargo: {str(e)}")
     
     def deletar_cargo(self, cargo_id: int) -> dict:
-        """Deleta um cargo"""
         if cargo_id <= 0:
             raise HTTPException(status_code=400, detail="ID do cargo deve ser um número positivo")
         

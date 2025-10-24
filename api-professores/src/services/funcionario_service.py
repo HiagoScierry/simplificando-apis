@@ -7,21 +7,17 @@ from src.repository.cargo_repository import cargo_repository
 
 
 class FuncionarioService:
-    """Serviço responsável pela lógica de negócio relacionada aos funcionários"""
-    
     def __init__(self):
         self.funcionario_repository = funcionario_repository
         self.cargo_repository = cargo_repository
     
     def listar_todos_funcionarios(self) -> List[Funcionario]:
-        """Lista todos os funcionários"""
         try:
             return self.funcionario_repository.list_funcionarios()
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro interno do servidor: {str(e)}")
     
     def obter_funcionario_por_id(self, funcionario_id: int) -> Funcionario:
-        """Obtém um funcionário específico pelo ID"""
         if funcionario_id <= 0:
             raise HTTPException(status_code=400, detail="ID do funcionário deve ser um número positivo")
         
@@ -32,7 +28,6 @@ class FuncionarioService:
         return funcionario
     
     def criar_novo_funcionario(self, funcionario_data: FuncionarioCreate) -> Funcionario:
-        """Cria um novo funcionário"""
         # Validações de entrada
         if not funcionario_data.nome or funcionario_data.nome.strip() == "":
             raise HTTPException(status_code=400, detail="Nome do funcionário é obrigatório")
@@ -59,7 +54,6 @@ class FuncionarioService:
             raise HTTPException(status_code=500, detail=f"Erro ao criar funcionário: {str(e)}")
     
     def atualizar_funcionario(self, funcionario_id: int, funcionario_data: FuncionarioCreate) -> Funcionario:
-        """Atualiza um funcionário existente"""
         if funcionario_id <= 0:
             raise HTTPException(status_code=400, detail="ID do funcionário deve ser um número positivo")
         
@@ -104,7 +98,6 @@ class FuncionarioService:
             raise HTTPException(status_code=500, detail=f"Erro ao atualizar funcionário: {str(e)}")
     
     def deletar_funcionario(self, funcionario_id: int) -> dict:
-        """Deleta um funcionário"""
         if funcionario_id <= 0:
             raise HTTPException(status_code=400, detail="ID do funcionário deve ser um número positivo")
         
