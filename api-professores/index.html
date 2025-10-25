@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Gestão - Cargos e Funcionários</title>
+    <style>
+      /* Minimal styling */
+      body {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        padding: 24px;
+        background: #f7fafc;
+        color: #0f172a;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+      .card {
+        background: white;
+        border-radius: 10px;
+        padding: 16px;
+        box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 6px;
+        color: #334155;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 10px;
+      }
+      button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 0;
+        cursor: pointer;
+      }
+      .btn-primary {
+        background: #2563eb;
+        color: white;
+      }
+      .btn-danger {
+        background: #ef4444;
+        color: white;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid #e6eef8;
+        font-size: 14px;
+      }
+      .actions button {
+        margin-right: 6px;
+      }
+      .muted {
+        color: #64748b;
+        font-size: 13px;
+      }
+      .small {
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gestão - Cargos e Funcionários</h1>
+    <p class="muted">Consome API em <strong>http://localhost:8000</strong></p>
+
+    <div class="grid">
+      <!-- CARGOS -->
+      <div class="card" id="cargos-card">
+        <h2 class="small">Cargos</h2>
+
+        <form id="cargo-form">
+          <input type="hidden" id="cargo-id" />
+          <label for="cargo-nome">Nome do cargo</label>
+          <input id="cargo-nome" placeholder="Ex: Desenvolvedor" required />
+
+          <div style="display: flex; gap: 8px">
+            <button type="submit" class="btn-primary">Salvar</button>
+            <button type="button" id="cargo-cancel">Cancelar</button>
+          </div>
+        </form>
+
+        <table id="cargos-table">
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Nome</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- FUNCIONÁRIOS -->
+      <div class="card" id="funcionarios-card">
+        <h2 class="small">Funcionários</h2>
+
+        <form id="func-form">
+          <input type="hidden" id="func-id" />
+          <label for="func-nome">Nome</label>
+          <input id="func-nome" placeholder="Ex: Hiago" required />
+
+          <label for="func-cargo">Cargo</label>
+          <select id="func-cargo">
+            <option value="">-- sem cargo --</option>
+          </select>
+
+          <div style="display: flex; gap: 8px">
+            <button type="submit" class="btn-primary">Salvar</button>
+            <button type="button" id="func-cancel">Cancelar</button>
+          </div>
+        </form>
+
+        <table id="funcs-table">
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Nome</th>
+              <th>Cargo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:8000";
+
+      /* ---------- CARGOS ---------- */
+      async function loadCargos() {
+        const res = await fetch(`${API}/cargos`);
+        const cargos = await res.json();
+        renderCargos(cargos);
+        populateCargoSelect(cargos);
+      }
+
+      function renderCargos(cargos) {
+        const tbody = document.querySelector("#cargos-table tbody");
+        tbody.innerHTML = "";
+        cargos.forEach((c) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+          <td>${c.id}</td>
+          <td>${escapeHtml(c.nome)}</td>
+          <td class="actions">
+            <button onclick="startEditCargo(${c.id}, ${escapeJsString(
+            c.nome
+          )})">Editar</button>
+            <button onclick="deleteCargo(${
+              c.id
+            })" class="btn-danger">Excluir</button>
+          </td>
+        `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      document
+        .getElementById("cargo-form")
+        .addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+          const id = document.getElementById("cargo-id").value;
+          const nome = document.getElementById("cargo-nome").value.trim();
+          if (!nome) return alert("Informe o nome do cargo");
+
+          if (id) {
+            // atualizar
+            const res = await fetch(`${API}/cargos/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nome }),
+            });
+            if (!res.ok) return alert("Erro ao atualizar cargo");
+          } else {
+            // criar
+            const res = await fetch(`${API}/cargos`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nome }),
+            });
+            if (!res.ok) return alert("Erro ao criar cargo");
+          }
+
+          resetCargoForm();
+          await loadCargos();
+          await loadFuncionarios(); // para atualizar nomes de cargo na lista
+        });
+
+      document
+        .getElementById("cargo-cancel")
+        .addEventListener("click", resetCargoForm);
+
+      function startEditCargo(id, nome) {
+        document.getElementById("cargo-id").value = id;
+        document.getElementById("cargo-nome").value = nome;
+      }
+
+      function resetCargoForm() {
+        document.getElementById("cargo-id").value = "";
+        document.getElementById("cargo-nome").value = "";
+      }
+
+      async function deleteCargo(id) {
+        if (!confirm("Deseja excluir este cargo?")) return;
+        const res = await fetch(`${API}/cargos/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const txt = await res.text();
+          return alert("Erro ao excluir cargo: " + txt);
+        }
+        await loadCargos();
+        await loadFuncionarios(); // atualizar funcionários que podem perder cargo
+      }
+
+      /* ---------- FUNCIONÁRIOS ---------- */
+      async function loadFuncionarios() {
+        const res = await fetch(`${API}/funcionarios`);
+        const funcs = await res.json();
+        renderFuncionarios(funcs);
+      }
+
+      function renderFuncionarios(funcs) {
+        const tbody = document.querySelector("#funcs-table tbody");
+        tbody.innerHTML = "";
+        funcs.forEach((f) => {
+          const nomeCargo = f.cargo_id
+            ? f.cargo_nome || "id:" + f.cargo_id
+            : "";
+          // Note: f.cargo_nome só existirá se a API retornar join; caso contrário, mostramos id.
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+          <td>${f.id}</td>
+          <td>${escapeHtml(f.nome)}</td>
+          <td>${escapeHtml(nomeCargo)}</td>
+          <td class="actions">
+            <button onclick="startEditFunc(${f.id}, ${escapeJsString(
+            f.nome
+          )}, ${f.cargo_id ?? "null"})">Editar</button>
+            <button onclick="deleteFunc(${
+              f.id
+            })" class="btn-danger">Excluir</button>
+          </td>
+        `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      document
+        .getElementById("func-form")
+        .addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+          const id = document.getElementById("func-id").value;
+          const nome = document.getElementById("func-nome").value.trim();
+          const cargo_id = document.getElementById("func-cargo").value || null;
+
+          if (!nome) return alert("Informe o nome do funcionário");
+
+          const body = { nome, cargo_id: cargo_id ? Number(cargo_id) : null };
+
+          if (id) {
+            const res = await fetch(`${API}/funcionarios/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            if (!res.ok) return alert("Erro ao atualizar funcionário");
+          } else {
+            const res = await fetch(`${API}/funcionarios`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+              const txt = await res.text();
+              return alert("Erro ao criar funcionário: " + txt);
+            }
+          }
+
+          resetFuncForm();
+          await loadFuncionarios();
+        });
+
+      document
+        .getElementById("func-cancel")
+        .addEventListener("click", resetFuncForm);
+
+      function startEditFunc(id, nome, cargo_id) {
+        document.getElementById("func-id").value = id;
+        document.getElementById("func-nome").value = nome;
+        document.getElementById("func-cargo").value = cargo_id ?? "";
+      }
+
+      function resetFuncForm() {
+        document.getElementById("func-id").value = "";
+        document.getElementById("func-nome").value = "";
+        document.getElementById("func-cargo").value = "";
+      }
+
+      async function deleteFunc(id) {
+        if (!confirm("Deseja excluir este funcionário?")) return;
+        const res = await fetch(`${API}/funcionarios/${id}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) return alert("Erro ao excluir funcionário");
+        await loadFuncionarios();
+      }
+
+      /* ---------- AUX ---------- */
+      function populateCargoSelect(cargos) {
+        const sel = document.getElementById("func-cargo");
+        const previous = sel.value;
+        sel.innerHTML = `<option value="">-- sem cargo --</option>`;
+        cargos.forEach((c) => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.nome;
+          sel.appendChild(opt);
+        });
+        sel.value = previous || "";
+      }
+
+      // small escaping helpers
+      function escapeHtml(s) {
+        if (s == null) return "";
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+      // produce a JS string literal (without quotes) for onclick inline usage
+      function escapeJsString(s) {
+        if (s == null) return "''";
+        return (
+          "'" + String(s).replaceAll("'", "\\'").replaceAll("\n", "\\n") + "'"
+        );
+      }
+
+      /* Inicial load */
+      (async function init() {
+        await loadCargos();
+        await loadFuncionarios();
+      })();
+    </script>
+  </body>
+</html>
